@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     })
   }
   const data = await req.json();
-  const { id, email } = data;
+  const { id, email } = data.record;
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const customer = await stripe.customers.create({
