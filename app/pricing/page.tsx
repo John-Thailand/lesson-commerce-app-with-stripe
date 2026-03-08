@@ -5,6 +5,7 @@ import { createClient } from "../lib/supabase/client";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/lib/database.types";
 import SubscriptionButton from "@/components/checkout/SubscriptionButton";
+import AuthServerButton from "@/components/auth/AuthServerButton";
 
 interface Plan {
   id: string;
@@ -58,7 +59,7 @@ const PricingPage = async () => {
           <CardContent>{plan.price}円 / {plan.interval}</CardContent>
           <CardFooter>
             {showSubscribeButton && <SubscriptionButton planId={plan.id} />}
-            {showCreateAccountButton && <Button>ログインする</Button>}
+            {showCreateAccountButton && <AuthServerButton />}
             {showManageSubscriptionButton && (
               <Button>サブスクリプション管理する</Button>
             )}
