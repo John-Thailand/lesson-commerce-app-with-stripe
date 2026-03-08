@@ -49,5 +49,5 @@ export async function GET(
     cancel_url: "http://localhost:3000/payment/cancelled",
   });
 
-  return NextResponse.json({ id: session.id });
+  return NextResponse.json({ url: session.url });
 }
