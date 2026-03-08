@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import initStripe, { Stripe } from "stripe";
+import { createClient } from "../lib/supabase/client";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@/lib/database.types";
+import SubscriptionButton from "@/components/checkout/SubscriptionButton";
 
 interface Plan {
   id: string;
@@ -26,8 +30,21 @@ const getAllPlans = async (): Promise<Plan[]> => {
   return plans;
 };
 
+const getProfileData = async (supabase: SupabaseClient<Database>) => {
+  const { data: lesson } = await supabase.from("profile").select("*").single();
+  return lesson;
+}
+
 const PricingPage = async () => {
+  const supabase = await createClient();
+  const { data: user } = await supabase.auth.getSession()
+
   const plans = await getAllPlans();
+  const profile = await getProfileData(supabase);
+
+  const showSubscribeButton = !!user.session && !profile.is_subscribed;
+  const showCreateAccountButton = !user.session;
+  const showManageSubscriptionButton = !!user.session && profile.is_subscribed;
 
   return (
     <div className="w-full max-w-3xl mx-auto py-16 flex justify-around">
@@ -40,20 +57,14 @@ const PricingPage = async () => {
           </CardHeader>
           <CardContent>{plan.price}円 / {plan.interval}</CardContent>
           <CardFooter>
-            <Button>サブスクリプション契約する</Button>
+            {showSubscribeButton && <SubscriptionButton planId={plan.id} />}
+            {showCreateAccountButton && <Button>ログインする</Button>}
+            {showManageSubscriptionButton && (
+              <Button>サブスクリプション管理する</Button>
+            )}
           </CardFooter>
         </Card>
       ))}
-      <Card>
-        <CardHeader>
-          <CardTitle>年額プラン</CardTitle>
-          <CardDescription>Annual</CardDescription>
-        </CardHeader>
-        <CardContent>20000円 / 年</CardContent>
-        <CardFooter>
-          <Button>サブスクリプション契約する</Button>
-        </CardFooter>
-      </Card>
     </div>
   );
 }
