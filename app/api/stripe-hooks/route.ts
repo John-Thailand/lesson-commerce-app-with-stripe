@@ -1,3 +1,5 @@
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/dist/server/request/cookies";
 import { NextRequest, NextResponse } from "next/server";
 import initStripe from "stripe";
 
@@ -8,15 +10,41 @@ export async function POST(req: NextRequest) {
 
   const reqBuffer = Buffer.from(await req.arrayBuffer());
 
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          async getAll() {
+            return (await cookieStore).getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(async ({ name, value, options }) => {
+              (await cookieStore).set(name, value, options);
+            });
+          },
+        },
+      }
+  )
+
   let event;
   try {
     event = stripe.webhooks.constructEvent(reqBuffer, signature!, endpointSecret!);
     switch (event.type) {
       case "customer.subscription.created":
+        const customerSubscriptionCreated = event.data.object
+        await supabase.from("profile").update({
+          is_subscribed: true,
+          interval: customerSubscriptionCreated.items.data[0].plan.interval,
+        })
+        .eq("stripe_customer", event.data.object.customer);
         break;
       case "customer.subscription.deleted":
+        const customerSubscriptionDeleted = event.data.object
         break;
       case "customer.subscription.updated":
+        const customerSubscriptionUpdated = event.data.object
         break;
       default:
         console.log(`Unhandled event type ${event.type}`);
