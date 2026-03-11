@@ -12,6 +12,11 @@ const Dashboard = async () => {
   const supabase = await createClient();
   const profile = await getProfileData(supabase);
 
+  const loadPortal = async () => {
+    const response = await fetch("http://localhost:3000/api/portal");
+    const data = await response.json();
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto py-16 px-8">
       <h1 className="text-3xl mb-6">ユーザー管理ダッシュボード</h1>
@@ -19,7 +24,7 @@ const Dashboard = async () => {
         <div>
           {profile?.is_subscribed ? `プラン契約中: ${profile.interval}` : 'プラン未加入' }
         </div>
-        <button>サブスクリプション管理</button>
+        <button onClick={loadPortal}>サブスクリプション管理</button>
       </div>
     </div>
   );
