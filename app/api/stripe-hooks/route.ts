@@ -40,11 +40,29 @@ export async function POST(req: NextRequest) {
         })
         .eq("stripe_customer", event.data.object.customer);
         break;
-      case "customer.subscription.deleted":
-        const customerSubscriptionDeleted = event.data.object
-        break;
       case "customer.subscription.updated":
         const customerSubscriptionUpdated = event.data.object
+
+        if (customerSubscriptionUpdated.status === 'canceled') {
+          await supabase.from("profile").update({
+            is_subscribed: false,
+            interval: null,
+          })
+          .eq("stripe_customer", event.data.object.customer);
+        } else {
+          await supabase.from("profile").update({
+            is_subscribed: true,
+            interval: customerSubscriptionUpdated.items.data[0].plan.interval,
+          })
+          .eq("stripe_customer", event.data.object.customer);
+        }
+        break;
+      case "customer.subscription.deleted":
+        await supabase.from("profile").update({
+          is_subscribed: false,
+          interval: null,
+        })
+        .eq("stripe_customer", event.data.object.customer);
         break;
       default:
         console.log(`Unhandled event type ${event.type}`);
